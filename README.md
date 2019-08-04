@@ -28,6 +28,7 @@ python3 main.py "$@"
 ## Example
 
 `elastic-manage move --index some_index_name --tag-value monolith` - move index to tag: monolith
+
 `elastic-manage incr --index some_index_name` - add one replica to index
 
 
