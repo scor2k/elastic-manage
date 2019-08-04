@@ -10,7 +10,7 @@ from __init__   import __application__
 
 from sa_tools import saElastic
 
-elastic = saElastic(host = "http://es125-data.msk.cian.ru:9200") #  ES5
+elastic = saElastic(host = "http://localhost:9200") #  ES5
 
 @click.group()
 def cli():
