@@ -7,7 +7,6 @@
 
 import logging
 import json
-import sys
 
 from datetime   import datetime
 from __init__   import __version__

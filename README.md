@@ -33,6 +33,10 @@ python3 main.py "$@"
 
 
 ## Changelog
+
+*0.3.6*
+  - list -- print indices with shard allocations
+
 *0.3.5*
   - translate
 

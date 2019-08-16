@@ -1,6 +1,5 @@
 # -*- coding: UTF-8 -*-
 import json
-import sys
 import os
 import click
 
@@ -10,7 +9,8 @@ from __init__   import __application__
 
 from sa_tools import saElastic
 
-elastic = saElastic(host = "http://localhost:9200") #  ES5
+#elastic = saElastic(host = "http://localhost:9200", domain='.cian.tech') #  ES5
+elastic = saElastic(host = "http://elk.cian.ru:8080", domain='.msk.cian.ru') #  ELK
 
 @click.group()
 def cli():
@@ -83,6 +83,13 @@ def delete(index):
   """
   elastic.delete_index( index = index )
 
+@click.command()
+def list():
+  """
+    show index list
+  """
+  elastic.list_indices()
+
 cli.add_command(info)
 cli.add_command(reset)
 cli.add_command(fix)
@@ -90,6 +97,7 @@ cli.add_command(wait)
 cli.add_command(move)
 cli.add_command(incr)
 cli.add_command(delete)
+cli.add_command(list)
 
 if __name__ == '__main__':
   cli()

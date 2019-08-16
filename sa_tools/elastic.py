@@ -12,9 +12,9 @@ import requests
 log   = saLogs()
 
 class saElastic:
-  def __init__(self, host = 'http://localhost:9200') :
+  def __init__(self, host = 'http://localhost:9200', domain='') :
     self.host = host 
-
+    self.domain = domain
 
   def __del__(self) :
     pass
@@ -364,3 +364,90 @@ class saElastic:
     rez = self._request( url = url, method='delete', params = None )
 
     print (rez)
+  
+  def _print_indices(self, idx: dict):
+    """
+      just print idx dictionary from list_indices def
+    """
+    max_len = 20
+    for i in idx.keys() :
+      if len(i) > max_len:
+        max_len = len(i)
+
+    for index, shard in idx.items():
+      spaces = " "*(max_len - len(index) + 1)
+      _size = '{:{width}.{prec}f}'.format(shard["size"]/(1024*1024*1024), width=6, prec=2)
+      _prim = f'| {" ; ".join(shard["prim_nodes"])}'.replace('STARTED','OK').replace(self.domain, '')
+      if len(shard["repl_nodes"]) > 0 :
+        _repl = f'| {" ; ".join(shard["repl_nodes"])}'.replace('STARTED','OK').replace(self.domain, '')
+      else :
+        _repl = f''
+
+      _str = f'{index}{spaces} | {_size} GB {_prim} {_repl} '
+      print (_str)
+    
+    pass
+
+    
+
+  def list_indices(self) :
+    """
+      get all indices and print it
+    """
+    url = f'/_cat/shards?format=json&bytes=b'
+    rez = self._request( url = url )
+
+    idx = {}
+    # idx[index_name] = { size: 1111, prim_nodes: [node1, node2], repl_nodes: [node3, node4] }
+
+    for shard in rez :
+      if 'index' in shard :
+        index = shard['index']
+      else :
+        continue
+
+      if index in idx :
+        # index already exists in the list
+        size = idx[index]['size']
+        prim_nodes = idx[index]['prim_nodes']
+        repl_nodes = idx[index]['repl_nodes']
+
+        if shard['prirep'] == 'p' :
+          # it is primary shard
+          size = size + int(shard['store'])
+          node = f"{shard['node']} - {shard['state']}"
+          prim_nodes.append(node)
+          idx[index] = { 'size' : size, 'prim_nodes' : prim_nodes, 'repl_nodes' : repl_nodes }
+        elif shard['prirep'] == 'r' :
+          node = f"{shard['node']} - {shard['state']}"
+          repl_nodes.append(node)
+          idx[index] = { 'size' : size, 'prim_nodes' : prim_nodes, 'repl_nodes' : repl_nodes }
+
+      else :
+        # just add this shard into indx
+        if shard['prirep'] == 'p' :
+          # it is primary shard
+          size = int(shard['store'])
+          node = f"{shard['node']} - {shard['state']}"
+          prim_nodes = list()
+          prim_nodes.append(node)
+          repl_nodes = list()
+          idx[index] = { 'size' : size, 'prim_nodes' : prim_nodes, 'repl_nodes' : repl_nodes }
+        elif shard['prirep'] == 'r' :
+          size = 0
+          node = f"{shard['node']} - {shard['state']}"
+          prim_nodes = list()
+          repl_nodes = list()
+          repl_nodes.append(node)
+          idx[index] = { 'size' : size, 'prim_nodes' : prim_nodes, 'repl_nodes' : repl_nodes }
+    
+    self._print_indices(idx)
+
+
+
+
+        
+        
+
+
+
