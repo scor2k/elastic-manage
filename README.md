@@ -36,6 +36,7 @@ python3 main.py "$@"
 
 *0.3.6*
   - list -- print indices with shard allocations
+  - move cluster settings into $HOME/.config/elastic-manage/settings.json 
 
 *0.3.5*
   - translate

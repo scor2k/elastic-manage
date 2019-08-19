@@ -19,6 +19,14 @@ class saElastic:
   def __del__(self) :
     pass
 
+  def _change_cluster(self, host, domain=''):
+    """
+      change elasticsearch cluster
+    """
+    self.host = host
+    self.domain = domain
+    log.debug(msg='Set Elasticsearch cluster', host = host, domain = domain)
+
   def _request(self, url: str, method: str = 'get', params: Optional[Dict[str, Any]] = None ):
     """
       request to elasticsearch (get/post/put/etc...)

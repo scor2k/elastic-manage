@@ -8,9 +8,19 @@ from __init__   import __application__
 
 
 from sa_tools import saElastic
+from sa_tools import saConfig
 
-#elastic = saElastic(host = "http://localhost:9200", domain='.cian.tech') #  ES5
-elastic = saElastic(host = "http://elk.cian.ru:8080", domain='.msk.cian.ru') #  ELK
+config = saConfig()
+config.load()
+cfg = config.config
+
+elastic = saElastic()
+
+if 'clusters' in cfg :
+  # settings has cluster secton
+  if 'default' in cfg['clusters'] :
+    # default cluster is set
+    elastic._change_cluster(host = cfg['clusters']['default']['host'], domain=cfg['clusters']['default']['domain'])
 
 @click.group()
 def cli():
