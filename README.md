@@ -34,6 +34,11 @@ python3 main.py "$@"
 
 ## Changelog
 
+*0.3.7*
+  - list -- list only indices on selected data node
+  - shards-per-node -- set total shards per node 
+  - move-index-from-node -- drain index from selected data node
+
 *0.3.6*
   - list -- print indices with shard allocations
   - move cluster settings into $HOME/.config/elastic-manage/settings.json 

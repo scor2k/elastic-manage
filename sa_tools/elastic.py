@@ -3,8 +3,10 @@
 from typing     import Dict, Any, Optional
 from requests   import HTTPError
 from time       import sleep
+from pathlib    import Path 
 
 from sa_tools import saLogs
+from __init__ import __app_name__
 
 import json
 import requests
@@ -232,7 +234,8 @@ class saElastic:
       "index.routing.allocation.exclude._name" : None,
       "index.routing.allocation.exclude.tag" : None,
       "index.routing.allocation.exclude.box_type" : None,
-      "index.routing.allocation.exclude.group" : None
+      "index.routing.allocation.exclude.group" : None,
+      "index.routing.allocation.total_shards_per_node" : None
     }
 
     yn = input(f'Are you sure to reset allocation settings for [{index}]? (y/N): ')
@@ -357,6 +360,30 @@ class saElastic:
 
     print (rez)
 
+  def set_number_shards_per_node(self, index, number = 'None'):
+    """
+      set index.routing.allocation.total_shards_per_node 
+    """
+    setting = {
+      "index.routing.allocation.total_shards_per_node" : number
+    }
+
+    yn = input(f'Are you sure to set total_shards_per_node settings for [{index}] into [{number}]? (y/N): ')
+    if yn == 'y' :
+      pass
+    else :
+      log.debug(msg = f'User cancel reseting allocation for the index [{index}]')
+      return True
+
+    url = f'/{index}/_settings'
+
+    rez = self._request( url = url, method='put', params = setting )
+    print (rez)
+
+
+
+
+
   def delete_index(self, index) :
     """
       delete index
@@ -398,7 +425,7 @@ class saElastic:
 
     
 
-  def list_indices(self) :
+  def list_indices(self, only_this_node = None) :
     """
       get all indices and print it
     """
@@ -413,6 +440,13 @@ class saElastic:
         index = shard['index']
       else :
         continue
+
+      # check if node settings is set
+      if only_this_node is not None :
+        if shard['node'] == only_this_node :
+          pass
+        else :
+          continue
 
       if index in idx :
         # index already exists in the list
@@ -450,6 +484,122 @@ class saElastic:
           idx[index] = { 'size' : size, 'prim_nodes' : prim_nodes, 'repl_nodes' : repl_nodes }
     
     self._print_indices(idx)
+
+  def _get_indices_on_node(self, node):
+    """
+      return list indices on seleterd data node
+    """
+    url = f'/_cat/shards?format=json'
+    rez = self._request( url = url )
+
+    # indices list
+    idx = set()
+
+    for shard in rez : 
+      if 'index' in shard:
+        if 'node' in shard and shard['node'] == node :
+          # add this index into list
+          idx.add(shard['index'])
+
+    return idx
+
+  def _save_indices_to_tmp(self, node):
+    """
+      save list of indices into settings and return list 
+    """
+    home = str(Path.home())
+    config_dir = f'{home}/.config/{__app_name__}'
+    tmp_file = f'{config_dir}/{node}.json'
+
+    idx = self._get_indices_on_node(node)
+
+    tmp = {}
+    tmp['indices'] = tuple(idx)
+
+    if len(idx) > 0 :
+      with open(tmp_file, 'w+') as outfile:
+        json.dump(tmp, outfile)
+
+    return idx
+
+  def index_move_from_node(self, index, node, without_confirmation=False, reset_shards_per_node=False) :
+    """
+      move index from selected data node
+    """
+    print ( f"Move {index} from {node}")
+
+    if without_confirmation :
+      log.info(msg = f'Moving [{index}] without confirmation!')
+    else :
+      yn = input(f'Are you sure to move [{index}] from data node [{node}]? (y/N) :')
+      if yn == 'y' :
+        pass
+      else :
+        log.debug(msg = f'User cancel move index [{index}] from [{node}]')
+        return True
+
+    if reset_shards_per_node == True :
+      # remove this settings
+      print (f"Remove index.routing.allocation.total_shards_per_node settings for {index}")
+      self.set_number_shards_per_node(index = index, number = None)
+
+    # start moving 
+    routing = self.get_index_routing(index = index)
+
+    include_name = list()
+    exclude_name = list()
+    
+    # looking into allocation['indlude'] and move our data node to exclude
+    if 'include' in routing:
+      include = routing['include']
+      if '_name' in include and len(include['_name']) > 0:
+        include_name = include['_name'].split(',')
+      else :
+        log.debug(msg = f'Nothing to do in [{index}]. No one node in include list ')
+        return False
+
+    if 'exclude' in routing:
+      exclude = routing['exclude']
+      if '_name' in exclude :
+        exclude_name = exclude['_name'].split(',')
+
+    include_name.remove(node)
+    exclude_name.append(node)
+
+    reset = {
+      "index.routing.allocation.include._name" : None,
+      "index.routing.allocation.include.tag" : None,
+      "index.routing.allocation.include.box_type" : None,
+      "index.routing.allocation.include.group" : None,
+      "index.routing.allocation.exclude._name" : ",".join(exclude_name),
+      "index.routing.allocation.exclude.tag" : None,
+      "index.routing.allocation.exclude.box_type" : None,
+      "index.routing.allocation.exclude.group" : None
+    }
+
+    url = f'/{index}/_settings'
+    rez = self._request( url = url, method='put', params = reset )
+
+    print ( f"Result: {rez}")
+
+    self.wait_index_relocation(index = index)
+    # fix index on current data nodes
+    self.index_fix(index = index, force = True)
+
+
+
+  def drain_node(self, node, reset_shards_per_node = False, wait_after_move = 10):
+    """
+      move all indices from data node to 
+        - reset_shards_per_node  if True remove this settings from index
+        - wait_after_move wait seconds before start next iteration 
+    """
+    pass
+
+
+    
+
+
 
 
 

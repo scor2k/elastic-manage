@@ -94,11 +94,44 @@ def delete(index):
   elastic.delete_index( index = index )
 
 @click.command()
-def list():
+@click.option('--index', type=str, required=True, help='Index name')
+@click.option('--number', type=str, required=False, help='Shards number or empty for None')
+def shards_per_node(index,number='None'):
+  """
+    set total_shards_per_node
+  """
+  elastic.set_number_shards_per_node( index = index, number = number )
+
+@click.command()
+@click.option('--node', type=str, required=False, help='List only indices from data node')
+def list(node):
   """
     show index list
   """
-  elastic.list_indices()
+  elastic.list_indices(only_this_node=node)
+
+@click.command()
+@click.option('--node', type=str, required=True, help='Data node name')
+def drain(node):
+  """
+    drain all indices from data node
+  """
+  elastic._save_indices_to_tmp(node=node)
+
+@click.command()
+@click.option('--index', type=str, required=True, help='Index name')
+@click.option('--node', type=str, required=True, help='Data node name')
+@click.option('--force', default=False, is_flag=True, help='Without confirmation.')
+@click.option('--reset', default=False, is_flag=True, help='Reset shards per node settings.')
+def move_index_from_node(index, node, force, reset):
+  """
+    move selected index from data node
+  """
+  elastic.index_move_from_node(index = index, node = node, without_confirmation=force, reset_shards_per_node=reset)
+
+
+
+
 
 cli.add_command(info)
 cli.add_command(reset)
@@ -108,6 +141,9 @@ cli.add_command(move)
 cli.add_command(incr)
 cli.add_command(delete)
 cli.add_command(list)
+cli.add_command(shards_per_node)
+cli.add_command(drain)
+cli.add_command(move_index_from_node)
 
 if __name__ == '__main__':
   cli()

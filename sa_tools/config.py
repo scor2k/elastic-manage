@@ -19,6 +19,7 @@ class saConfig:
     self.home = str(Path.home())
     self.config_dir = f'{self.home}/.config/{__app_name__}'
     self.config_file = f'{self.config_dir}/settings.json'
+    self.tmp_file = f'{self.config_dir}/tmp.json'
 
     # check if directory exists
     try :
@@ -46,7 +47,6 @@ class saConfig:
 
     return True
 
-
   def save(self) :
     """
     save current config into file
@@ -55,6 +55,28 @@ class saConfig:
     if len(self.config) > 0  :
       with open(self.config_file, 'w+') as outfile:
         json.dump(self.config, outfile)
+    return True
+
+  def load_tmp(self) :
+    """
+    load temporary settings from file
+    """
+    if os.path.exists(self.tmp_file) :
+      with open(self.tmp_file) as json_file:
+        self.tmp = json.load(json_file)
+    else :
+      # create empty config
+      with open(self.tmp_file, 'w+') as outfile:
+        json.dump({}, outfile)
+    return True
+
+  def save_tmp(self) :
+    """
+    save temporray setting into file
+    """
+    if len(self.tmp) > 0  :
+      with open(self.tmp_file, 'w+') as outfile:
+        json.dump(self.tmp, outfile)
     return True
 
   
