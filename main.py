@@ -70,7 +70,7 @@ def wait(index):
 @click.option('--tag-name', type=str, default='tag', help='Tag name. It can be: tag (default), group, rack_id.')
 @click.option('--wait', type=int, default=10, help='Timeout before start moving the shard, sec.')
 @click.option('--force', default=False, is_flag=True, help='Without confirmation.')
-def move(index, tag_value, tag_name, wait, force):
+def move_index_to_tag(index, tag_value, tag_name, wait, force):
   """
     Move index to the specific tag
   """
