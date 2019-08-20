@@ -38,6 +38,7 @@ python3 main.py "$@"
   - list -- list only indices on selected data node
   - shards-per-node -- set total shards per node 
   - move-index-from-node -- drain index from selected data node
+  - drain-node -- move all indices from selected data node to other
 
 *0.3.6*
   - list -- print indices with shard allocations

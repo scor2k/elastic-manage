@@ -503,6 +503,44 @@ class saElastic:
 
     return idx
 
+  def _get_index_location(self, indices : set):
+    """
+      get shard list for every index in indices  and save into file
+    """
+    url = f'/_cat/shards?format=json'
+    rez = self._request( url = url )
+
+    idx = {}
+    # idx[index_name] = { size: 1111, prim_nodes: [node1, node2], repl_nodes: [node3, node4] }
+
+    for shard in rez :
+      if 'index' in shard :
+        index = shard['index']
+      else :
+        continue
+
+      if index in indices :
+        # this index in our list
+        pass
+      else :
+        # skip
+        continue
+
+      if index in idx :
+        # index already exists in the list
+        nodes = idx[index]
+        nodes.append( shard['node'] )
+        idx[index] = nodes
+      else :
+        # new index, just add first node in the list 
+        nodes = list()
+        nodes.append( shard['node'] )
+        idx[index] = nodes
+
+    return idx
+
+    
+
   def _save_indices_to_tmp(self, node):
     """
       save list of indices into settings and return list 
@@ -513,12 +551,11 @@ class saElastic:
 
     idx = self._get_indices_on_node(node)
 
-    tmp = {}
-    tmp['indices'] = tuple(idx)
+    idx_info = self._get_index_location(idx)
 
     if len(idx) > 0 :
       with open(tmp_file, 'w+') as outfile:
-        json.dump(tmp, outfile)
+        json.dump(idx_info, outfile)
 
     return idx
 
@@ -546,24 +583,24 @@ class saElastic:
     # start moving 
     routing = self.get_index_routing(index = index)
 
-    include_name = list()
+    #include_name = list()
     exclude_name = list()
     
     # looking into allocation['indlude'] and move our data node to exclude
-    if 'include' in routing:
-      include = routing['include']
-      if '_name' in include and len(include['_name']) > 0:
-        include_name = include['_name'].split(',')
-      else :
-        log.debug(msg = f'Nothing to do in [{index}]. No one node in include list ')
-        return False
+    #if 'include' in routing:
+    #  include = routing['include']
+    #  if '_name' in include and len(include['_name']) > 0:
+    #    include_name = include['_name'].split(',')
+    #  else :
+    #    log.debug(msg = f'Nothing to do in [{index}]. No one node in include list ')
+    #    return False
 
     if 'exclude' in routing:
       exclude = routing['exclude']
       if '_name' in exclude :
         exclude_name = exclude['_name'].split(',')
 
-    include_name.remove(node)
+    #include_name.remove(node)
     exclude_name.append(node)
 
     reset = {
@@ -588,13 +625,34 @@ class saElastic:
 
 
 
-  def drain_node(self, node, reset_shards_per_node = False, wait_after_move = 10):
+  def drain_node(self, node, reset_shards_per_node = False, wait_after_move = 10, test = True):
     """
       move all indices from data node to 
         - reset_shards_per_node  if True remove this settings from index
         - wait_after_move wait seconds before start next iteration 
     """
-    pass
+    idx_list = self._get_indices_on_node(node = node)
+    print ( f"Index list on {node} : {idx_list}" )
+    yn = input(f'Are you sure to DRAIN [{node}]? All indices above will move out... (y/N) :')
+    if yn == 'y' :
+      pass
+    else :
+      log.debug(msg = f'User cancel drain [{node}] ')
+      return True
+
+    # save 
+    self._save_indices_to_tmp(node = node)
+    log.debug(msg = "You can find indices list at $HOME/.config/elastic-manage/<node>.json ")
+
+    # idx_list -- list of indices on this node
+    for idx in idx_list :
+      if test == True :
+        log.debug(msg = f'Test mode. Move shards', index = idx, node = node )
+      else :
+        log.debug(msg = f'Work mode. Move shards', index = idx, node = node )
+        #self.index_move_from_node(index = idx, node = node, without_confirmation = True, reset_shards_per_node = reset_shards_per_node)
+      
+
 
 
     

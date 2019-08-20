@@ -96,7 +96,7 @@ def delete(index):
 @click.command()
 @click.option('--index', type=str, required=True, help='Index name')
 @click.option('--number', type=str, required=False, help='Shards number or empty for None')
-def shards_per_node(index,number='None'):
+def set_shards_per_node(index,number='None'):
   """
     set total_shards_per_node
   """
@@ -112,11 +112,14 @@ def list(node):
 
 @click.command()
 @click.option('--node', type=str, required=True, help='Data node name')
-def drain(node):
+@click.option('--reset', default=False, is_flag=True, help='Reset shards per node settings.')
+@click.option('--wait', type=int, default=10, help='Timeout before start moving the shard, sec.')
+@click.option('--test', default=False, is_flag=True, help='Just test without action [default]')
+def drain_node(node, reset, wait, test):
   """
     drain all indices from data node
   """
-  elastic._save_indices_to_tmp(node=node)
+  elastic.drain_node(node = node, reset_shards_per_node=reset, wait_after_move=wait, test = test )
 
 @click.command()
 @click.option('--index', type=str, required=True, help='Index name')
@@ -137,13 +140,13 @@ cli.add_command(info)
 cli.add_command(reset)
 cli.add_command(fix)
 cli.add_command(wait)
-cli.add_command(move)
+cli.add_command(move_index_to_tag)
+cli.add_command(move_index_from_node)
 cli.add_command(incr)
 cli.add_command(delete)
 cli.add_command(list)
-cli.add_command(shards_per_node)
-cli.add_command(drain)
-cli.add_command(move_index_from_node)
+cli.add_command(set_shards_per_node)
+cli.add_command(drain_node)
 
 if __name__ == '__main__':
   cli()
