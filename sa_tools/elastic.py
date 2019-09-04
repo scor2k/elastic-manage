@@ -187,9 +187,10 @@ class saElastic:
         return False
 
       # generate string with separator
-      include_name = ",".join(include_node)
-
-
+      try :
+        include_name = ",".join(include_node)
+      except :
+        include_name = ""
 
     else :
       return False
@@ -456,7 +457,10 @@ class saElastic:
 
         if shard['prirep'] == 'p' :
           # it is primary shard
-          size = size + int(shard['store'])
+          try :
+            size = size + int(shard['store'])
+          except:
+            pass
           node = f"{shard['node']} - {shard['state']}"
           prim_nodes.append(node)
           idx[index] = { 'size' : size, 'prim_nodes' : prim_nodes, 'repl_nodes' : repl_nodes }
@@ -469,7 +473,10 @@ class saElastic:
         # just add this shard into indx
         if shard['prirep'] == 'p' :
           # it is primary shard
-          size = int(shard['store'])
+          try :
+            size = int(shard['store'])
+          except:
+            eize = 0
           node = f"{shard['node']} - {shard['state']}"
           prim_nodes = list()
           prim_nodes.append(node)
