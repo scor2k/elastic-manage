@@ -85,6 +85,16 @@ def incr(index, force):
   """
   elastic.incr_replica_amount( index = index, without_confirmation = force)
 
+
+@click.command()
+@click.option('--index', type=str, required=True, help='Index name')
+@click.option('--force', default=False, is_flag=True, help='Without confirmation.')
+def decr(index, force):
+  """
+    Increase replic numbers
+  """
+  elastic.decr_replica_amount( index = index, without_confirmation = force)
+
 @click.command()
 @click.option('--index', type=str, required=True, help='Index name')
 def delete(index):
@@ -143,6 +153,7 @@ cli.add_command(wait)
 cli.add_command(move_index_to_tag)
 cli.add_command(move_index_from_node)
 cli.add_command(incr)
+cli.add_command(decr)
 cli.add_command(delete)
 cli.add_command(list)
 cli.add_command(set_shards_per_node)

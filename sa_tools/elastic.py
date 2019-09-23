@@ -328,6 +328,39 @@ class saElastic:
 
     return idx_location
 
+  def decr_replica_amount(self, index, without_confirmation=False) :
+    """
+      get current replica amount and decr this number 
+    """
+
+    routing = self.get_index_routing(index = index)
+    amount = int(routing['number_of_replicas'])
+
+    print( f"Index routing: {routing} ")
+    print (f"Replica count after increase: {amount-1}.")
+
+    if without_confirmation :
+      log.info(msg = f'Move [{index}] without confirmation!')
+    else :
+      yn = input(f'Are you sure to add one replica to index [{index}] ? (y/N) :')
+      if yn == 'y' :
+        pass
+      else :
+        log.debug(msg = f'User cancel incr replica number to index [{index}]')
+        return True
+
+    replica = {
+      "index.number_of_replicas" : amount-1
+    }
+
+    url = f'/{index}/_settings'
+    rez = self._request( url = url, method='put', params = replica )
+
+    # change. then wait
+    self.wait_index_relocation(index = index)
+
+    print (rez)
+
   def incr_replica_amount(self, index, without_confirmation=False) :
     """
       get current replica amount and incr this number 

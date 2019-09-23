@@ -33,6 +33,9 @@ python3 main.py "$@"
 
 
 ## Changelog
+*0.3.9*
+  - decrease the number of replics
+
 *0.3.8*
   - fixed bug when index in 'unassigned' state
 
