@@ -81,7 +81,7 @@ def move_index_to_tag(index, tag_value, tag_name, wait, force):
 @click.option('--force', default=False, is_flag=True, help='Without confirmation.')
 def incr(index, force):
   """
-    Increase replic numbers
+    Increase the number of replicas
   """
   elastic.incr_replica_amount( index = index, without_confirmation = force)
 
@@ -91,7 +91,7 @@ def incr(index, force):
 @click.option('--force', default=False, is_flag=True, help='Without confirmation.')
 def decr(index, force):
   """
-    Increase replic numbers
+    Decrease the number of replicas
   """
   elastic.decr_replica_amount( index = index, without_confirmation = force)
 
