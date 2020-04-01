@@ -7,3 +7,4 @@ __pycache__
 *.pem
 env/**
 backup/**
+*.egg-info
