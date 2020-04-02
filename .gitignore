@@ -5,3 +5,6 @@
 __pycache__
 .vscode/**
 *.pem
+env/**
+backup/**
+*.egg-info

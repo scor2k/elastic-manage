@@ -1,38 +1,33 @@
 # ELASTICSEARCH MANAGEMENT SYSTEM
 
+## How to install
+
+```
+git clone git@github.com:scor2k/elastic-manage.git
+cd elastic-manage && python3 -m venv env && source env/bin/activate
+pip install -r requirements.txt && pip install -e .
+```
+
 ## How to use
 
-Usage: main.py [OPTIONS] COMMAND [ARGS]...
-
-Options:
-  --help  Show this message and exit.
-
-Commands:
-  delete  Remove index
-  fix     Fix index allocation to the current data nodes.
-  incr    Increase replic numbers
-  info    Show shard locations, allocation and base settings
-  move    Move index to the specific tag
-  reset   Remove all allocation settings
-  wait    Wait index movement to the new location.
-
-You can create some bash script:
-```
-$ cat /usr/local/bin/elastic-manage 
-#!/bin/sh
-
-cd /opt/elastic-manage
-python3 main.py "$@"
-```
 
 ## Example
 
-`elastic-manage move --index some_index_name --tag-value monolith` - move index to tag: monolith
+*move index to specific data-nodes*
+```
+./run move-index --cluster elk.cian.tech:8080 --index sa_autotests --nodes log-data12.cian.tech --nodes log-data13.cian.tech --nodes log-data14.cian.tech
+```
 
-`elastic-manage incr --index some_index_name` - add one replica to index
 
 
 ## Changelog
+*1.0.0*
+  - added new move-index command (see an example above)
+  - removed cluster configuration, you need to put cluster address
+  - removed move_index_to_tag command
+  - removed index_move_from_node command (replaced by move-index)
+  - removed drain_node command (becaus this is uncontrollable)
+
 *0.3.9*
   - decrease the number of replics
 
