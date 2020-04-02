@@ -13,11 +13,20 @@ pip install -r requirements.txt && pip install -e .
 
 ## Example
 
+*move index to specific data-nodes*
+```
+./run move-index --cluster elk.cian.tech:8080 --index sa_autotests --nodes log-data12.cian.tech --nodes log-data13.cian.tech --nodes log-data14.cian.tech
+```
+
 
 
 ## Changelog
 *1.0.0*
-  - remove cluster configuration
+  - added new move-index command (see an example above)
+  - removed cluster configuration, you need to put cluster address
+  - removed move_index_to_tag command
+  - removed index_move_from_node command (replaced by move-index)
+  - removed drain_node command (becaus this is uncontrollable)
 
 *0.3.9*
   - decrease the number of replics

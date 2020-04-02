@@ -2,6 +2,7 @@
 
 import json
 import requests
+import pprint
 
 from typing import Dict, Any, Optional
 from requests import HTTPError
@@ -85,6 +86,118 @@ class sreElastic:
         log.debug(msg=f"Nothing to do in [{index}].")
         return False
 
+    def move_index_to_custom_nodes(self, index: str, nodes: tuple, timeout: int, without_confirmation=False):
+        """
+        1. fix index on the currend data-nodes
+        2. start moving shard by shard:
+          - add one node new to include list
+          - remove one old node from include
+          - remove the same old node to exclude
+
+    """
+        pp = pprint.PrettyPrinter(indent=2, width=120)
+
+        print("\nLocation:")
+        pp.pprint(self.get_index_location(index))
+        print("\nRouting:")
+        pp.pprint(self.get_index_routing(index))
+        print("\n")
+
+        if without_confirmation:
+            log.info(msg=f"Move [{index}] without confirmation!")
+        else:
+            yn = input(f"Are you sure to move [{index}] to the nodes [{nodes}]? (y/N) :")
+            if yn == "y":
+                pass
+            else:
+                log.info(msg=f"User cancel moving index [{index}] to the nodes [{nodes}]")
+                return True
+
+        self.index_fix(index=index, force=True)
+
+        routing = self.get_index_routing(index)
+
+        print("\nRouting:")
+        pp.pprint(routing)
+        print("\n")
+
+        nodes = list(nodes)  # tuple => list
+        nodes.sort()
+
+        destination = nodes.copy()  # we will not remove noting from this list RO!!
+
+        include = routing["include"]["_name"].split(",")  # list of current nodes
+        include.sort()
+
+        exclude = list()
+
+        if without_confirmation or len(nodes) == len(include):
+            pass
+        else:
+            yn = input(f"The number of nodes {nodes} is not the same as allocations {include}. Are you sure? (y/N) :")
+            if yn == "y":
+                pass
+            else:
+                log.info(msg=f"User cancel moving index [{index}] to the nodes [{nodes}]")
+                return True
+
+        # start moving
+        for idx in range(min(len(nodes), len(include))):
+            # iterate as much as we have in the smallest list
+
+            _to_include = None
+            for i in range(len(nodes)):
+                if nodes[i] not in include:  # if nodes not in include list then we must go there
+                    _to_include = nodes.pop(i)
+                    break
+
+            if not _to_include:
+                # nothing to do
+                break
+
+            _to_exclude = None
+            for i in range(len(include)):
+                if include[i] not in destination:  # chose one node to exclude
+                    _to_exclude = include.pop(i)
+                    break
+
+            # adding new nodes
+            if _to_include not in include:  # do not add the same node twice
+                include.append(_to_include)
+
+            # will remove node from inlcude if we are not going to this node
+            if _to_exclude in include and _to_exclude not in destination:
+                include.remove(_to_exclude)
+
+            # add new node to exclude list
+            exclude.append(_to_exclude)
+
+            # new index allocation will be
+            reset = {
+                "index.routing.allocation.include._name": ",".join(include),
+                "index.routing.allocation.exclude._name": ",".join(exclude),
+            }
+
+            print("\nGoing to set this settings: ")
+            pp.pprint(reset)
+            print("\n")
+
+            url = f"/{index}/_settings"
+            rez = self._request(url=url, method="put", params=reset)
+
+            self.wait_index_relocation(index=index)
+
+            log.info(msg=f"Waiting for [{timeout}] seconds before next iteration")
+            sleep(timeout)
+
+        print("Done")
+        print("\nLocation:")
+        pp.pprint(self.get_index_location(index))
+        print("\nRouting:")
+        pp.pprint(self.get_index_routing(index))
+        print("\n")
+
+    # DEPRECATED
     def index_move(self, index, tag_value, tag_name, wait_after_move=10, without_confirmation=False):
         """
       tag_name = 'tag, group, etc...'
@@ -96,6 +209,9 @@ class sreElastic:
        - step by step move one shard from old data-node to new
        - wait after every step
     """
+        print("DEPRECATED")
+        return False
+
         print(f"Index location: {self.get_index_location(index = index)}")
         print(f"Index routing: {self.get_index_routing(index = index)}")
 
@@ -578,6 +694,9 @@ class sreElastic:
         """
       move index from selected data node
     """
+        print("DEPRECATED")
+        return False
+
         print(f"Move {index} from {node}")
 
         if without_confirmation:

@@ -10,10 +10,11 @@ from datetime import datetime
 
 logger = logging.getLogger()
 
-DEBUG = os.environ.get("DEBUG", False)
+DEBUG = os.environ.get("DEBUG", True)
 WARNING = os.environ.get("WARNING", True)
 
 version = pkg_resources.require("elastic-manage")[0].version
+
 
 class sreLogs:
     APP = None

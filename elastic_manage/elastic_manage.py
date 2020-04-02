@@ -15,7 +15,7 @@ def cli():
     """CLI for Elasticsearch"""
 
 
-@cli.command(name="indices")
+@cli.command(name="list")
 @click.option("--cluster", type=str, required=True, help="Elasticsearch cluster address")
 @click.option("--node", type=str, required=False, default=None, help="List only indices from specific data node")
 def show_elasticsearch_indices(cluster: str, node: str):
@@ -71,9 +71,7 @@ def show_elasticsearch_index_info(cluster: str, index: str):
     print("\n")
 
 
-cli.command(name="shards-per-node")
-
-
+@cli.command(name="shards-per-node")
 @click.option("--cluster", type=str, required=True, help="Elasticsearch cluster address")
 @click.option("--index", type=str, required=True, help="Elasticsearch index name")
 @click.option("--number", type=int, required=True, help="Number of shards per node")
@@ -114,6 +112,19 @@ def add_one_replica_to_elasticsearch_index(cluster: str, index: str, force: bool
 
     elastic = sreElastic(host=cluster)
     elastic.decr_replica_amount(index=index, without_confirmation=force)
+
+
+@cli.command(name="move-index")
+@click.option("--cluster", type=str, required=True, help="Elasticsearch cluster address")
+@click.option("--index", type=str, required=True, help="Elasticsearch index name.")
+@click.option("-n", "--nodes", type=str, multiple=True, required=True, help="All nodes where new index must be")
+@click.option("--timeout", type=int, default=15, help="Timeout between iterations.")
+@click.option("--force", is_flag=True, help="Do without confirmation.")
+def move_index_to_nodes(cluster: str, index: str, nodes: tuple, timeout: int, force: bool = False):
+    """Move index shard by shard to new location"""
+
+    elastic = sreElastic(host=cluster)
+    elastic.move_index_to_custom_nodes(index=index, nodes=nodes, timeout=timeout, without_confirmation=force)
 
 
 @cli.command(name="version")
