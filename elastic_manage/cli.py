@@ -4,10 +4,9 @@
 from datetime import datetime
 import pprint
 import click
-import json
 import pkg_resources
 
-from sre_tools import sreElastic
+from elastic_manage.sre_tools import sreElastic
 
 
 @click.group()
@@ -97,7 +96,7 @@ def delete_elasticsearch_index(cluster: str, index: str):
 @click.option("--index", type=str, required=True, help="Elasticsearch index name.")
 @click.option("--force", is_flag=True, help="Do without confirmation.")
 def add_one_replica_to_elasticsearch_index(cluster: str, index: str, force: bool = False):
-    """Delete index."""
+    """Add one replica."""
 
     elastic = sreElastic(host=cluster)
     elastic.incr_replica_amount(index=index, without_confirmation=force)
@@ -107,8 +106,8 @@ def add_one_replica_to_elasticsearch_index(cluster: str, index: str, force: bool
 @click.option("--cluster", type=str, required=True, help="Elasticsearch cluster address")
 @click.option("--index", type=str, required=True, help="Elasticsearch index name.")
 @click.option("--force", is_flag=True, help="Do without confirmation.")
-def add_one_replica_to_elasticsearch_index(cluster: str, index: str, force: bool = False):
-    """Delete index."""
+def remove_one_replica_from_elasticsearch_index(cluster: str, index: str, force: bool = False):
+    """Remove one replica."""
 
     elastic = sreElastic(host=cluster)
     elastic.decr_replica_amount(index=index, without_confirmation=force)
@@ -121,7 +120,7 @@ def add_one_replica_to_elasticsearch_index(cluster: str, index: str, force: bool
 @click.option("--timeout", type=int, default=15, help="Timeout between iterations.")
 @click.option("--force", is_flag=True, help="Do without confirmation.")
 def move_index_to_nodes(cluster: str, index: str, nodes: tuple, timeout: int, force: bool = False):
-    """Move index shard by shard to new location"""
+    """Move index shard by shard to the new location."""
 
     elastic = sreElastic(host=cluster)
     elastic.move_index_to_custom_nodes(index=index, nodes=nodes, timeout=timeout, without_confirmation=force)

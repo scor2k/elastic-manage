@@ -1,3 +1,3 @@
 #!/bin/bash
 
-python elastic_manage/elastic_manage.py "$@"
+python elastic_manage/cli.py "$@"
